@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pixel Art Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <h1>Pixel Art Maker</h1>
+
+  <div class="controls">
+    <label>Grid Size:
+      <input type="number" id="gridSize" value="16" min="2" max="64"/>
+    </label>
+    <button id="createBtn">Create Grid</button>
+
+    <label>Color:
+      <input type="color" id="colorPicker" value="#ff0000"/>
+    </label>
+
+    <button id="eraseBtn">Eraser</button>
+    <button id="clearBtn">Clear All</button>
+  </div>
+
+  <div id="grid-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
