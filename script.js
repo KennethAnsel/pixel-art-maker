@@ -1,67 +1,191 @@
-const gridContainer = document.getElementById('grid-container');
-const colorPicker   = document.getElementById('colorPicker');
-const gridSizeInput = document.getElementById('gridSize');
-const createBtn     = document.getElementById('createBtn');
-const eraseBtn      = document.getElementById('eraseBtn');
-const clearBtn      = document.getElementById('clearBtn');
+const canvas = document.getElementById('pixelCanvas');
+const submitButton = document.getElementById('submitButton');
+const clearButton = document.getElementById('clearButton');
+const fillButton = document.getElementById('fillButton');
+const saveButton = document.getElementById('saveButton');
+const loadButton = document.getElementById('loadButton');
+const gridLineButton = document.getElementById('gridLineButton');
+const randomColorButton = document.getElementById('randomColorButton');
+const colorPicker = document.getElementById('colorPicker');
+const colorValue = document.getElementById('colorValue');
+const gridStatus = document.getElementById('gridStatus');
+const heightInput = document.getElementById('inputHeight');
+const widthInput = document.getElementById('inputWidth');
 
-let isDrawing  = false;
-let eraseMode  = false;
+let isPainting = false;
+let showGridLines = true;
 
-// Build grid
-function createGrid(size) {
-  gridContainer.innerHTML = '';
-  gridContainer.style.gridTemplateColumns = `repeat(${size}, 20px)`;
+function getGridSize(input) {
+    const parsedValue = Number.parseInt(input.value, 10);
+    const min = Number.parseInt(input.min, 10) || 1;
+    const max = Number.parseInt(input.max, 10) || 64;
 
-  for (let i = 0; i < size * size; i++) {
-    const pixel = document.createElement('div');
-    pixel.classList.add('pixel');
-    pixel.addEventListener('mousedown', startDraw);
-    pixel.addEventListener('mouseover', drawOver);
-    pixel.addEventListener('mouseup',   stopDraw);
-    gridContainer.appendChild(pixel);
-  }
+    if (Number.isNaN(parsedValue)) {
+        return min;
+    }
+
+    return Math.min(Math.max(parsedValue, min), max);
 }
 
-function startDraw(e) {
-  isDrawing = true;
-  colorPixel(e.target);
+function generateRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let randomColor = '#';
+
+    for (let i = 0; i < 6; i++) {
+        randomColor += letters[Math.floor(Math.random() * 16)];
+    }
+
+    return randomColor;
 }
 
-function drawOver(e) {
-  if (isDrawing) colorPixel(e.target);
+function paintCell(cell) {
+    cell.style.backgroundColor = colorPicker.value;
 }
 
-function stopDraw() {
-  isDrawing = false;
+function updateStatus(height, width) {
+    const lineText = showGridLines ? 'Grid lines on' : 'Grid lines off';
+    gridStatus.textContent = `${height} x ${width} grid ready | ${lineText}`;
 }
 
-function colorPixel(pixel) {
-  pixel.style.backgroundColor = eraseMode ? '#16213e' : colorPicker.value;
+function makeGrid() {
+    const height = getGridSize(heightInput);
+    const width = getGridSize(widthInput);
+
+    heightInput.value = height;
+    widthInput.value = width;
+
+    canvas.innerHTML = '';
+
+    for (let i = 0; i < height; i++) {
+        const row = canvas.insertRow(i);
+
+        for (let j = 0; j < width; j++) {
+            const cell = row.insertCell(j);
+
+            cell.addEventListener('mousedown', function() {
+                isPainting = true;
+                paintCell(cell);
+            });
+
+            cell.addEventListener('mouseenter', function() {
+                if (isPainting) {
+                    paintCell(cell);
+                }
+            });
+        }
+    }
+
+    updateStatus(height, width);
+    applyGridLineState();
 }
 
-// Erase toggle
-eraseBtn.addEventListener('click', () => {
-  eraseMode = !eraseMode;
-  eraseBtn.textContent = eraseMode ? '✏️ Draw' : 'Eraser';
-  eraseBtn.style.background = eraseMode ? '#0f3460' : '#e94560';
+function clearGrid() {
+    const cells = canvas.getElementsByTagName('td');
+
+    for (const cell of cells) {
+        cell.style.backgroundColor = '';
+    }
+}
+
+function fillGrid() {
+    const cells = canvas.getElementsByTagName('td');
+
+    for (const cell of cells) {
+        cell.style.backgroundColor = colorPicker.value;
+    }
+}
+
+function saveDrawing() {
+    const cells = canvas.getElementsByTagName('td');
+    const colors = [];
+
+    for (const cell of cells) {
+        colors.push(cell.style.backgroundColor || '');
+    }
+
+    const drawingData = {
+        height: Number.parseInt(heightInput.value, 10),
+        width: Number.parseInt(widthInput.value, 10),
+        colors: colors
+    };
+
+    localStorage.setItem('pixelArtMakerDrawing', JSON.stringify(drawingData));
+    gridStatus.textContent = 'Drawing saved in browser storage';
+}
+
+function loadDrawing() {
+    const savedDrawing = localStorage.getItem('pixelArtMakerDrawing');
+
+    if (!savedDrawing) {
+        gridStatus.textContent = 'No saved drawing found';
+        return;
+    }
+
+    const drawingData = JSON.parse(savedDrawing);
+    heightInput.value = drawingData.height;
+    widthInput.value = drawingData.width;
+    makeGrid();
+
+    const cells = canvas.getElementsByTagName('td');
+
+    for (let i = 0; i < cells.length; i++) {
+        cells[i].style.backgroundColor = drawingData.colors[i] || '';
+    }
+
+    gridStatus.textContent = `${drawingData.height} x ${drawingData.width} drawing loaded`;
+}
+
+function applyGridLineState() {
+    canvas.classList.toggle('hide-grid-lines', !showGridLines);
+    gridLineButton.textContent = showGridLines ? 'Hide Lines' : 'Show Lines';
+}
+
+function setPickerColor(color) {
+    colorPicker.value = color;
+    colorValue.textContent = color.toUpperCase();
+}
+
+submitButton.addEventListener('click', function() {
+    makeGrid();
 });
 
-// Clear all
-clearBtn.addEventListener('click', () => {
-  document.querySelectorAll('.pixel').forEach(p => {
-    p.style.backgroundColor = '#16213e';
-  });
+clearButton.addEventListener('click', function() {
+    clearGrid();
 });
 
-// Prevent drag-select interference
-document.addEventListener('mouseup', () => { isDrawing = false; });
-
-// Create on button click
-createBtn.addEventListener('click', () => {
-  const size = parseInt(gridSizeInput.value);
-  if (size >= 2 && size <= 64) createGrid(size);
+fillButton.addEventListener('click', function() {
+    fillGrid();
 });
 
-// Default grid on load
-createGrid(16);
+saveButton.addEventListener('click', function() {
+    saveDrawing();
+});
+
+loadButton.addEventListener('click', function() {
+    loadDrawing();
+});
+
+gridLineButton.addEventListener('click', function() {
+    showGridLines = !showGridLines;
+    applyGridLineState();
+    updateStatus(Number.parseInt(heightInput.value, 10), Number.parseInt(widthInput.value, 10));
+});
+
+randomColorButton.addEventListener('click', function() {
+    setPickerColor(generateRandomColor());
+});
+
+colorPicker.addEventListener('input', function() {
+    setPickerColor(colorPicker.value);
+});
+
+document.addEventListener('mouseup', function() {
+    isPainting = false;
+});
+
+canvas.addEventListener('mouseleave', function() {
+    isPainting = false;
+});
+
+applyGridLineState();
+makeGrid();
