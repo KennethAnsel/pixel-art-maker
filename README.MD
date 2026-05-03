@@ -28,8 +28,4 @@ Want more?
 If you want features like layers, a larger palette, or animated sprite export, open an issue or submit a pull request — contributions welcome.
 
 Author
-Your name here
-
-License
-Add a license (MIT recommended) if you want others to reuse your code.
-
+Kenneth Ansel Francis
