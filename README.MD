@@ -27,5 +27,5 @@ Project files
 Want more?
 If you want features like layers, a larger palette, or animated sprite export, open an issue or submit a pull request — contributions welcome.
 
-Author
+Author : 
 Kenneth Ansel Francis
